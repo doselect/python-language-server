@@ -92,6 +92,7 @@ class Workspace(object):
         self._docs.pop(doc_uri)
 
     def update_document(self, doc_uri, change, version=None):
+        log.exception("docs %s", self._docs)
         self._docs[doc_uri].apply_change(change)
         self._docs[doc_uri].version = version
 
@@ -100,14 +101,14 @@ class Workspace(object):
         for doc_uri in self.documents:
             self.get_document(doc_uri).update_config(settings)
 
-    def apply_edit(self, edit):
-        return self._endpoint.request(self.M_APPLY_EDIT, {'edit': edit})
+    def apply_edit(self, socket_id, edit):
+        return self._endpoint.request(socket_id, self.M_APPLY_EDIT, {'edit': edit})
 
-    def publish_diagnostics(self, doc_uri, diagnostics):
-        self._endpoint.notify(self.M_PUBLISH_DIAGNOSTICS, params={'uri': doc_uri, 'diagnostics': diagnostics})
+    def publish_diagnostics(self, socket_id, doc_uri, diagnostics):
+        self._endpoint.notify(self.M_PUBLISH_DIAGNOSTICS, socket_id, params={'uri': doc_uri, 'diagnostics': diagnostics})
 
-    def show_message(self, message, msg_type=lsp.MessageType.Info):
-        self._endpoint.notify(self.M_SHOW_MESSAGE, params={'type': msg_type, 'message': message})
+    def show_message(self, socket_id, message, msg_type=lsp.MessageType.Info):
+        self._endpoint.notify(self.M_SHOW_MESSAGE, socket_id, params={'type': msg_type, 'message': message})
 
     def source_roots(self, document_path):
         """Return the source roots for the given document."""
@@ -260,6 +261,10 @@ class Document(object):
         environment = self.get_enviroment(environment_path, env_vars=env_vars) if environment_path else None
         sys_path = self.sys_path(environment_path, env_vars=env_vars) + extra_paths
         project_path = self._workspace.root_path
+
+        # log.exception('sys path jedi %s', sys_path)
+        # sys_path = [sys_path[0], '/root/.pyenv/versions/3.6.5/lib/python3.6', '/root/.pyenv/versions/3.6.5/lib/python3.6/lib-dynload', '/root/.pyenv/versions/3.6.5/lib/python3.6/site-packages']
+        # log.exception('sys path jedi 1 %s', sys_path)
 
         # Extend sys_path with document's path if requested
         if use_document_path:
