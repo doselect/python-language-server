@@ -145,7 +145,6 @@ class PythonLanguageServer(MethodDispatcher):
         self._jsonrpc_stream_writer.close()
 
     def _match_uri_to_workspace(self, uri):
-        log.exception("workspace %s", self.workspaces)
         workspace_uri = _utils.match_uri_to_workspace(uri, self.workspaces)
         return self.workspaces.get(workspace_uri, self.workspace)
 
@@ -154,7 +153,6 @@ class PythonLanguageServer(MethodDispatcher):
         workspace = self._match_uri_to_workspace(doc_uri)
         doc = workspace.get_document(doc_uri) if doc_uri else None
         hook_handlers = self.config.plugin_manager.subset_hook_caller(hook_name, self.config.disabled_plugins)
-        log.exception("hook %s", hook_handlers)
         return hook_handlers(config=self.config, workspace=workspace, document=doc, **kwargs)
 
     def capabilities(self):
@@ -202,12 +200,10 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_initialize(self, processId=None, rootUri=None, rootPath=None, initializationOptions=None, **_kwargs):
         log.debug('Language server initialized with %s %s %s %s', processId, rootUri, rootPath, initializationOptions)
-        log.exception('New one %s', self.workspaces)
         if rootUri is None:
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ''
 
         # self.workspaces.pop(self.root_uri, None)
-        log.exception('New one 1 %s', self.workspaces)
         self.root_uri = rootUri
         self.config = config.Config(rootUri, initializationOptions or {},
                                     processId, _kwargs.get('capabilities', {}))
@@ -215,7 +211,6 @@ class PythonLanguageServer(MethodDispatcher):
         self.workspaces[rootUri] = self.workspace
         self._dispatchers = self._hook('pyls_dispatchers')
         self._hook('pyls_initialize')
-        log.exception('New one 2 %s', self.workspaces)
 
         if self._check_parent_process and processId is not None and self.watching_thread is None:
             def watch_parent_process(pid):
